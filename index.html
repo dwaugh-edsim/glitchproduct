@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlitchProduct | AI Marking Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <div id="login-screen" class="overlay">
+        <div class="glass-card login-card">
+            <div class="logo">GP</div>
+            <h1>Secure Access</h1>
+            <p>Enter your credentials to unlock the tool</p>
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="Username">
+                <input type="password" id="passInput" placeholder="Password">
+            </div>
+            <button class="btn-primary" id="loginBtn">Unlock Access</button>
+            <p id="loginError" class="error-text">Incorrect credentials. Please try again.</p>
+        </div>
+    </div>
+
+    <main id="main-app" style="display: none;">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-text">Glitch<span class="accent">Product</span></span>
+                <span class="tool-tag">Marking Tool</span>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-icon" id="settingsBtn" title="API Settings">⚙️</button>
+                <button class="btn-icon" id="logoutBtn" title="Logout">🔒</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <section class="config-grid">
+                <!-- Assignment Card -->
+                <div class="glass-card input-section">
+                    <div class="section-header">
+                        <label>Assignment Context</label>
+                        <span class="icon">📄</span>
+                    </div>
+                    <div class="upload-zone" id="assignmentZone">
+                        <p>Drop file or click to upload</p>
+                        <input type="file" id="assignmentFile" accept=".docx,.txt,.pdf,.pptx,.xlsx" hidden>
+                        <div class="file-tag" id="assignmentInfo"></div>
+                    </div>
+                    <textarea id="assignmentText" placeholder="Describe the task, learning objectives, and expectations..."></textarea>
+                </div>
+
+                <!-- Rubric Card -->
+                <div class="glass-card input-section">
+                    <div class="section-header">
+                        <label>Grading Rubric</label>
+                        <span class="icon">📊</span>
+                    </div>
+                    <div class="upload-zone" id="rubricZone">
+                        <p>Drop rubric or click to upload</p>
+                        <input type="file" id="rubricFile" accept=".docx,.txt,.pdf,.pptx,.xlsx" hidden>
+                        <div class="file-tag" id="rubricInfo"></div>
+                    </div>
+                    <div class="guidance-input">
+                        <input type="text" id="rubricGuidance" placeholder="Add specific guidance (e.g. emphasize creativity)">
+                        <button class="btn-small" id="genRubricBtn">Generate ✨</button>
+                    </div>
+                    <textarea id="rubricText" placeholder="Paste rubric details or generated criteria here..."></textarea>
+                </div>
+
+                <!-- Guidance Card -->
+                <div class="glass-card input-section full-width">
+                    <div class="section-header">
+                        <label>Global Marking Rules</label>
+                        <span class="icon">⚠️</span>
+                    </div>
+                    <textarea id="markingGuidance" placeholder="CRITICAL RULES: e.g. 'Ignore grammar', 'Focus only on core concepts', 'Be lenient on citations'. These rules override all other criteria."></textarea>
+                </div>
+            </section>
+
+            <section class="work-section glass-card">
+                <div class="section-header">
+                    <div class="title-group">
+                        <label>Student Submissions</label>
+                        <p class="subtitle">Batch process up to 100 students</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="redactToggle" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label">Redact Names/Emails</span>
+                    </label>
+                </div>
+                <div class="upload-zone large" id="workZone">
+                    <span class="upload-icon">🎓</span>
+                    <p>Drop multiple student files or click to upload</p>
+                    <input type="file" id="workFile" accept=".docx,.txt,.pdf,.pptx,.xlsx" multiple hidden>
+                    <div class="file-tag" id="workInfo"></div>
+                </div>
+                <div id="studentFileList" class="student-list"></div>
+                <textarea id="workText" placeholder="Or paste student work here for a single quick mark..." style="display:none"></textarea>
+            </section>
+
+            <section class="model-selection">
+                <div class="model-card">
+                    <label>Teacher A</label>
+                    <select id="modelSelect"></select>
+                </div>
+                <div class="model-card">
+                    <label>Teacher B</label>
+                    <select id="modelSelectB"></select>
+                </div>
+                <div class="model-card">
+                    <label>Lead Moderator</label>
+                    <select id="modelSelectC"></select>
+                </div>
+            </section>
+
+            <div class="action-bar">
+                <button class="btn-secondary" id="calibrationBtn">⚡ Run Calibration</button>
+                <button class="btn-primary" id="submitBtn">
+                    <span>Generate All Assessments</span>
+                    <div class="loader"></div>
+                </button>
+                <div class="session-tools">
+                    <button class="btn-ghost" id="saveSessionBtn" title="Save Session">💾</button>
+                    <button class="btn-ghost" id="loadSessionBtn" title="Load Session">📂</button>
+                </div>
+            </div>
+
+            <section id="results" class="results-section" style="display: none;">
+                <div class="results-header">
+                    <h2>Assessment Log</h2>
+                    <div class="results-actions">
+                        <button class="btn-small" id="downloadResultsBtn">📥 Export Report</button>
+                        <button class="btn-small danger" id="clearResultsBtn">🗑️ Clear</button>
+                    </div>
+                </div>
+                <div id="assessmentOutput" class="output-container"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="overlay">
+        <div class="glass-card modal-card">
+            <h2>API Settings</h2>
+            <p>Your keys are stored locally in your browser.</p>
+            <div class="settings-group">
+                <label>OpenRouter API Key</label>
+                <input type="password" id="openrouter_key" placeholder="sk-or-v1-...">
+            </div>
+            <div class="settings-group">
+                <label>Z.AI (Zhipu) API Key</label>
+                <input type="password" id="zai_key" placeholder="Enter your Z.AI key">
+            </div>
+            <div class="settings-group">
+                <label>MiniMax API Key</label>
+                <input type="password" id="minimax_key" placeholder="Enter your MiniMax key">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="saveSettingsBtn">Save Changes</button>
+                <button class="btn-ghost" id="closeSettingsBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calibration Modal -->
+    <div id="calibrationModal" class="overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <div class="title-group">
+                    <h2>⚡ Calibration Mode</h2>
+                    <p>Reviewing 3 samples to verify your guidance.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="calibRerunBtn">🔄 Re-run</button>
+                    <button class="btn-primary success" id="calibApproveBtn">✅ Approve & Start Batch</button>
+                    <button class="btn-ghost danger" id="closeCalibBtn">❌ Close</button>
+                </div>
+            </div>
+            <div class="calibration-body">
+                <div class="quick-tune">
+                    <label>Adjust Guidance on the fly:</label>
+                    <textarea id="calibGuidanceInput"></textarea>
+                </div>
+                <div id="calibrationResults" class="calibration-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="sessionFile" accept=".json" hidden>
+
+    <script src="script.js"></script>
+</body>
+</html>
