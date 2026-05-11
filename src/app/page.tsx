@@ -27,9 +27,9 @@ export default function MarkingTool() {
   const [results, setResults] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const [modelA, setModelA] = useState('mistralai/mistral-nemo');
-  const [modelB, setModelB] = useState('allenai/molmo-2-8b:free');
-  const [modelC, setModelC] = useState('cognitivecomputations/dolphin-mistral-24b-venice-edition:free');
+  const [modelA, setModelA] = useState('meta-llama/llama-3.3-70b-instruct');
+  const [modelB, setModelB] = useState('z-ai/glm-4.7');
+  const [modelC, setModelC] = useState('minimax/minimax-m2.7');
 
   // Login Logic
   const handleLogin = async (e: React.FormEvent) => {
@@ -185,22 +185,25 @@ export default function MarkingTool() {
             <h3 className="font-bold border-b border-white/5 pb-2">Teacher Configuration</h3>
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Teacher A</label>
+                <label className="text-xs font-bold uppercase text-slate-500">Teacher A (OpenRouter)</label>
                 <select className="input-field py-2" value={modelA} onChange={e => setModelA(e.target.value)}>
-                  <option value="mistralai/mistral-nemo">Mistral Nemo</option>
+                  <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+                  <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
                   <option value="openai/gpt-4o">GPT-4o</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Teacher B</label>
+                <label className="text-xs font-bold uppercase text-slate-500">Teacher B (Z.AI / GLM)</label>
                 <select className="input-field py-2" value={modelB} onChange={e => setModelB(e.target.value)}>
-                  <option value="allenai/molmo-2-8b:free">Molmo 2 (Free)</option>
+                  <option value="z-ai/glm-4.7">GLM 4.7 (Latest)</option>
+                  <option value="z-ai/glm-4.7-flash">GLM 4.7 Flash</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Moderator</label>
+                <label className="text-xs font-bold uppercase text-slate-500">Moderator (MiniMax)</label>
                 <select className="input-field py-2" value={modelC} onChange={e => setModelC(e.target.value)}>
-                  <option value="cognitivecomputations/dolphin-mistral-24b-venice-edition:free">Dolphin Mistral</option>
+                  <option value="minimax/minimax-m2.7">MiniMax M2.7 (Latest)</option>
+                  <option value="minimax/abab6.5-chat">MiniMax abab6.5</option>
                 </select>
               </div>
             </div>
